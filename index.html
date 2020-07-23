@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8" />
+<head>
+    <title>Speedtest app for Mr.Shihar</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" crossorigin="anonymous">
+
+</head>
+
+<body>
+    <div class="container">
+	<div class="row"><div class="col-md-12 col-sm-12 col-xs-12"><h1>This will test your internet speed in every 5 minutes.</h1>
+
+    <h4>Your IP Address</h4>
+    <p id="ip"></p>
+	</div></div>
+   <div class="row"><div class="col-md-6 col-sm-6 col-xs-6">
+   Download:<span class="label label-primary" id="download">0</span>
+   </div>
+   <div class="col-md-6 col-md-6 col-xs-6">Upload:<span class="label label-success" id="upload">0</span></div>
+	
+
+</div>
+<div class="row">
+	<div class="col-md-12 col-sm-12 col-xs-12"> <table id="mixed" class="table">
+<tr><th>Time</th><th>Download Speed</th><th>Upload Speed</th><th>Latency</th></tr>
+
+</table></div></div>
+
+    <script type="text/javascript">
+	
+	 var mixed = document.getElementById("mixed");
+var tbody = document.createElement("tbody");
+	
+  
+mixed.appendChild(tbody);
+
+goTest();
+	
+	function goTest(){
+	startTest();
+	setInterval(startTest, 1000*60*5);
+	}
+	//setTimeout(startTest,1000*60);
+	
+	function startTest(){
+        var w = new Worker('speedtest_worker.min.js') // create new worker
+		w.postMessage('start') // start the speedtest (default params. keep garbage.php and empty.dat in the same directory as the js file)
+		
+  // IE7 only supports appending rows to tbody
+  
+		 var tr = document.createElement("tr");
+  
+       var timer= setInterval(function(){w.postMessage('status')}, 200) // ask for status every 100ms
+	   
+        w.onmessage = function (event) { // when status is received, split the string and put the values in the appropriate fields
+            var data = JSON.parse(event.data); //fetch speedtest worker output
+            document.getElementById('download').textContent = data.dlStatus + ' Mbit/s'
+          document.getElementById('upload').textContent = data.ulStatus + ' Mbit/s'
+          //  document.getElementById('ping').textContent = data.pingStatus + ' ms, ' + data.jitterStatus + ' ms jitter'
+            document.getElementById('ip').textContent = data.clientIp
+			
+			
+	   
+			var status=data.testState;
+			if(status>=4){
+			//alert('Done')
+			 var td = document.createElement("td");
+			 var td2=document.createElement("td");
+			 var td1=document.createElement("td");
+			 var td3=document.createElement("td");
+			 var d=new Date();
+			 var timtxt=document.createTextNode(d);
+       var txt = document.createTextNode(data.dlStatus + ' Mbit/s');
+	   var ustatus=document.createTextNode(data.ulStatus + ' Mbit/s');
+	   td.className='bg-primary';
+	   td2.className='bg-success';
+	   td3.className='bg-warning';
+	   td1.className='bg-info';
+	   var latency=document.createTextNode(data.pingStatus + ' ms, ' + data.jitterStatus + ' ms jitter');
+	   td1.appendChild(timtxt);
+       td.appendChild(txt);
+	   td2.appendChild(ustatus);
+	   td3.appendChild(latency);
+	   tr.appendChild(td1);
+       tr.appendChild(td);
+	   tr.appendChild(td2);
+	   tr.appendChild(td3);
+	   
+	   tbody.appendChild(tr);
+    // mixed.appendChild(tbody);
+			w.postMessage('stop');
+			clearInterval(timer);
+			console.log('Done');
+			}
+        }
+        
+		}
+		
+    </script>
+
+	<div class="row">
+	<div class="col-md-12 col-sm-12 col-xs-12 text-right"><span>Developed by Nijas.</span>
+	</div></div>
+	</div>
+
+</body>
+</html>
